@@ -565,6 +565,47 @@
                 padding: 6px 10px;
             }
         }
+
+        #ai-assistant-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            background: #f1f1f1;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        #ai-assistant-widget.collapsed {
+            height: 40px;
+            max-height: 40px;
+        }
+        #ai-assistant-widget .ai-header {
+            background: #003366;
+            color: #fff;
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+        #ai-assistant-widget .ai-chat-body {
+            display: none;
+            padding: 0.5rem;
+            overflow-y: auto;
+            background: #fff;
+        }
+        #ai-assistant-widget:not(.collapsed) .ai-chat-body {
+            display: block;
+        }
+        #ai-assistant-widget .ai-input-area {
+            display: none;
+            padding: 0.5rem;
+            background: #e9e9e9;
+        }
+        #ai-assistant-widget:not(.collapsed) .ai-input-area {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -1310,6 +1351,24 @@ What would you like me to help you with today?`;
 
         // Initialize the AI Assistant when the page is loaded
         document.addEventListener('DOMContentLoaded', initAIAssistant);
+    </script>
+
+    <div id="ai-assistant-widget" class="collapsed" aria-live="polite">
+        <div class="ai-header" tabindex="0">AI Assistant</div>
+        <div class="ai-chat-body">
+            <!-- Assistant messages will appear here -->
+        </div>
+        <div class="ai-input-area">
+            <textarea id="ai-input" rows="1" placeholder="Type a message..."></textarea>
+            <button id="send-btn" aria-label="Send message">Send</button>
+        </div>
+    </div>
+    <script>
+        // Toggle AI assistant widget visibility
+        document.querySelector('.ai-header').addEventListener('click', () => {
+            document.getElementById('ai-assistant-widget').classList.toggle('collapsed');
+        });
+        // ...additional JavaScript for interactions...
     </script>
 </body>
 </html>

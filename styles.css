@@ -1,0 +1,26 @@
+/* Define color scheme and fonts */
+:root {
+	--primary-color: #1E90FF;
+	--secondary-color: #FFD700;
+	--background-color: #F8F8F8;
+	--text-color: #333333;
+	--accent-color: #FF4500;
+	--primary-font: 'Roboto', sans-serif;
+	--secondary-font: 'Open Sans', sans-serif;
+}
+body {
+	// ...existing code...
+	background-color: var(--background-color);
+	color: var(--text-color);
+	font-family: var(--primary-font);
+	// ...existing code...
+}
+h1, h2, h3 {
+	font-family: var(--secondary-font);
+}
+/* Search input styling */
+.nav-search input {
+	padding: 5px;
+	border: 1px solid var(--primary-color);
+	border-radius: 4px;
+}

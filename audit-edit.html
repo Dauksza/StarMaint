@@ -3,8 +3,499 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Audit - StarMaint</title>
+    <title>audit-edit.html</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* AI Assistant Styles */
+        .ai-assistant-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .ai-chat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .ai-chat-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .ai-icon-container {
+            position: relative;
+        }
+        
+        .ai-status-indicator {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success);
+            border: 2px solid white;
+        }
+        
+        .ai-chat-panel {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 380px;
+            height: 600px;
+            background-color: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.3s, opacity 0.3s;
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .ai-chat-panel.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .ai-chat-panel.minimized {
+            height: 60px;
+            overflow: hidden;
+        }
+        
+        .ai-chat-header {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+        
+        .ai-chat-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ai-chat-title h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .ai-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .ai-badge-premium {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .ai-badge-system {
+            background-color: var(--danger);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .ai-chat-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .ai-control-button {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .ai-control-button:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .ai-chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background-color: var(--gray-50);
+        }
+        
+        .ai-chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+        }
+        
+        .ai-message {
+            display: flex;
+            gap: 12px;
+            max-width: 90%;
+        }
+        
+        .ai-message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .ai-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .ai-message.user .ai-avatar {
+            background-color: #e0e7ff;
+            color: var (--secondary);
+        }
+        
+        .ai-message.assistant .ai-avatar {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+        
+        .ai-message-content {
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .ai-message.user .ai-message-content {
+            background-color: var(--secondary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .ai-message.assistant .ai-message-content {
+            background-color: white;
+            color: var(--gray-800);
+            border-bottom-left-radius: 4px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .ai-message.system .ai-message-content {
+            background-color: #dcfce7;
+            color: #166534;
+            border-bottom-left-radius: 4px;
+            border-left: 3px solid var(--success);
+        }
+        
+        .ai-typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 6px 12px;
+            align-items: center;
+        }
+        
+        .ai-typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--gray-400);
+            animation: typing-animation 1.4s infinite both;
+        }
+        
+        .ai-typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .ai-typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing-animation {
+            0%, 100% { opacity: 0.4; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(-4px); }
+        }
+        
+        .ai-suggested-prompts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .ai-suggested-prompt {
+            padding: 8px 12px;
+            background-color: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-xl);
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            max-width: 100%;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        
+        .ai-suggested-prompt:hover {
+            background-color: var(--gray-100);
+            border-color: var(--gray-300);
+        }
+        
+        .ai-chat-input-container {
+            padding: 12px 16px;
+            background-color: white;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        
+        .ai-chat-input {
+            flex: 1;
+            resize: none;
+            border: 1px solid var(--gray-200);
+            border-radius: 20px;
+            padding: 10px 16px;
+            max-height: 120px;
+            overflow-y: auto;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        .ai-chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .ai-send-button, .ai-voice-button {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .ai-send-button:hover, .ai-voice-button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .ai-voice-button {
+            background-color: var(--gray-100);
+            color: var(--gray-600);
+        }
+        
+        .ai-voice-button:hover {
+            background-color: var(--gray-200);
+        }
+
+        .loader {
+            display: none;
+            width: 36px;
+            height: 36px;
+            border: 3px solid var(--gray-200);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .demo-section {
+            margin-top: 40px;
+        }
+        
+        .open-ai-assistant {
+            display: block;
+            margin: 30px auto;
+            padding: 12px 24px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .open-ai-assistant:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .ai-message-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .ai-action-button {
+            padding: 6px 12px;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .ai-action-button:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .ai-action-button.admin {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #b91c1c;
+        }
+        
+        .ai-action-button.admin:hover {
+            background-color: #fecaca;
+        }
+
+        .system-status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #1f2937;
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            z-index: 9998;
+            border-top: 1px solid #374151;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #9ca3af;
+        }
+        
+        .status-dot.active {
+            background-color: #10b981;
+            box-shadow: 0 0 5px #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.warning {
+            background-color: #f59e0b;
+            box-shadow: 0 0 5px #f59e0b;
+        }
+        
+        .status-dot.error {
+            background-color: #ef4444;
+            box-shadow: 0 0 5px #ef4444;
+        }
+        
+        .status-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .status-action-button {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #4b5563;
+            background-color: #374151;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .status-action-button:hover {
+            background-color: #4b5563;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        /* Media Queries */
+        @media (max-width: 480px) {
+            .ai-chat-panel {
+                width: calc(100vw - 40px);
+                height: 500px;
+                bottom: 70px;
+            }
+            
+            .ai-message {
+                max-width: 95%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .status-text, .action-text {
+                display: none;
+            }
+            
+            .system-status-bar {
+                padding: 6px 10px;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -31,15 +522,676 @@
                 <li><a href="terms.html">Terms of Service</a></li>
                 <li><a href="error.html">Error</a></li>
             </ul>
+            <input type="text" id="search-bar" placeholder="Search...">
         </nav>
     </header>
     <main>
         <h2>Edit Audit</h2>
-        <p>This page will allow editing of an audit.</p>
+        <p>This page will allow editing of audit information.</p>
+        <a href="audit-schedules.html">View Audit Schedules</a>
     </main>
     <footer>
         <p>&copy; 2025 StarMaint. All rights reserved.</p>
     </footer>
-    <script src="js/script.js"></script>
+    <script>
+        // Suggested prompts for the AI Assistant
+        const suggestedPrompts = [
+            "Create a work order for HVAC maintenance",
+            "Show me equipment requiring maintenance",
+            "Generate a maintenance report for Q1",
+            "What's the status of work order #4580?",
+            "Schedule preventive maintenance for next week",
+            "Modify system configuration",
+            "Update user permissions",
+            "Fix application errors",
+            "Access database",
+            "Execute system command"
+        ];
+        
+        // Chat history array
+        let chatHistory = [];
+        let isProcessing = false;
+        let isOpen = false;
+        let isMinimized = false;
+        
+        // DOM Elements
+        const chatButton = document.getElementById('ai-chat-button');
+        const openAssistantButton = document.getElementById('open-ai-assistant');
+        const chatPanel = document.getElementById('ai-chat-panel');
+        const closeBtn = document.getElementById('ai-close');
+        const minimizeBtn = document.getElementById('ai-minimize');
+        const sendBtn = document.getElementById('ai-send');
+        const voiceBtn = document.getElementById('ai-voice');
+        const inputField = document.getElementById('ai-input');
+        const messagesContainer = document.getElementById('ai-messages');
+        const promptsContainer = document.getElementById('ai-suggested-prompts');
+        const systemStatusBar = document.getElementById('system-status-bar');
+        const toggleSystemControl = document.getElementById('toggle-system-control');
+
+        // Initialize the AI Assistant with enhanced capabilities
+        function initAIAssistant() {
+            renderSuggestedPrompts();
+            bindEvents();
+            initSystemIntegration();
+        }
+        
+        // Initialize AI system integration
+        async function initSystemIntegration() {
+            if (window.aiSystemIntegration) {
+                await window.aiSystemIntegration.initialize();
+                console.log('AI System Integration initialized');
+                
+                // Add welcome message
+                if (isOpen && chatHistory.length === 0) {
+                    const welcomeMessage = await window.aiSystemIntegration.getWelcomeMessage();
+                    addAssistantMessage(welcomeMessage);
+                }
+            } else {
+                console.warn('AI System Integration not available. Some features may be unavailable.');
+            }
+        }
+        
+        // Render suggested prompts
+        function renderSuggestedPrompts() {
+            if (!promptsContainer) return;
+            
+            promptsContainer.innerHTML = '';
+            
+            suggestedPrompts.forEach(prompt => {
+                const promptElement = document.createElement('button');
+                promptElement.className = 'ai-suggested-prompt';
+                promptElement.textContent = prompt;
+                promptElement.addEventListener('click', () => {
+                    if (inputField) {
+                        inputField.value = prompt;
+                        sendMessage();
+                    }
+                });
+                
+                promptsContainer.appendChild(promptElement);
+            });
+        }
+        
+        // Bind event listeners
+        function bindEvents() {
+            // Open chat button
+            if (openAssistantButton) {
+                openAssistantButton.addEventListener('click', toggleChat);
+            }
+            
+            // Chat button
+            if (chatButton) {
+                chatButton.addEventListener('click', toggleChat);
+            }
+            
+            // System control toggle
+            if (toggleSystemControl) {
+                toggleSystemControl.addEventListener('click', showSystemControlPanel);
+            }
+
+            // Close and minimize buttons
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeChat);
+            }
+            
+            if (minimizeBtn) {
+                minimizeBtn.addEventListener('click', toggleMinimize);
+            }
+            
+            // Send message button and input field
+            if (sendBtn && inputField) {
+                sendBtn.addEventListener('click', sendMessage);
+                inputField.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                    
+                    // Auto-resize textarea
+                    setTimeout(() => {
+                        inputField.style.height = 'auto';
+                        inputField.style.height = (inputField.scrollHeight) + 'px';
+                    }, 0);
+                });
+            }
+            
+            // Voice input button
+            if (voiceBtn) {
+                voiceBtn.addEventListener('click', toggleVoiceInput);
+            }
+            
+            // Set up event listeners for action buttons
+            document.addEventListener('click', (e) => {
+                const actionButton = e.target.closest('.ai-action-button');
+                if (actionButton) {
+                    handleActionButtonClick(actionButton);
+                }
+            });
+        }
+
+        // Toggle chat panel visibility
+        function toggleChat() {
+            if (!chatPanel) return;
+            
+            chatPanel.classList.toggle('active');
+            isOpen = chatPanel.classList.contains('active');
+            chatPanel.setAttribute('aria-hidden', !isOpen);
+            
+            if (isOpen && chatHistory.length === 0) {
+                if (window.aiSystemIntegration) {
+                    window.aiSystemIntegration.getWelcomeMessage()
+                        .then(welcomeMessage => {
+                            addAssistantMessage(welcomeMessage);
+                        })
+                        .catch(() => {
+                            addAssistantMessage(getWelcomeMessage());
+                        });
+                } else {
+                    addAssistantMessage(getWelcomeMessage());
+                }
+            }
+        }
+
+        // Close the chat panel
+        function closeChat() {
+            if (!chatPanel) return;
+            
+            chatPanel.classList.remove('active');
+            isOpen = false;
+            chatPanel.setAttribute('aria-hidden', 'true');
+        }
+
+        // Toggle minimized state
+        function toggleMinimize() {
+            if (!chatPanel) return;
+            
+            chatPanel.classList.toggle('minimized');
+            isMinimized = chatPanel.classList.contains('minimized');
+        }
+
+        // Show system control panel
+        function showSystemControlPanel() {
+            // Display the system control information as a system message
+            addSystemMessage(
+                "System Control Panel\n\n" +
+                "Status: Active and fully operational\n" +
+                "Permissions: Full system access granted\n" +
+                "Mode: Administrator\n\n" +
+                "The AI assistant has complete control over the application system.",
+                [
+                    { action: 'restart-system', label: 'Restart System', admin: true },
+                    { action: 'execute-command', label: 'Execute Command', admin: true },
+                    { action: 'view-system-logs', label: 'View Logs', admin: true },
+                    { action: 'disable-system-control', label: 'Disable Control', admin: true }
+                ]
+            );
+            
+            // Make sure chat is open
+            if (!isOpen) {
+                toggleChat();
+            }
+        }
+
+        // Handle action button clicks
+        function handleActionButtonClick(button) {
+            const action = button.getAttribute('data-action');
+            
+            switch(action) {
+                case 'execute-command':
+                    const command = prompt('Enter command to execute:');
+                    if (command) {
+                        executeSystemCommand(command);
+                    }
+                    break;
+                    
+                case 'restart-system':
+                    executeSystemCommand('restart');
+                    break;
+                    
+                case 'view-system-logs':
+                    if (window.systemControl) {
+                        window.systemControl.getApplicationLogs()
+                            .then(logs => {
+                                addSystemMessage(`System Logs:\n\n${JSON.stringify(logs, null, 2)}`);
+                            })
+                            .catch(error => {
+                                addSystemMessage(`Error getting logs: ${error.message}`);
+                            });
+                    } else {
+                        addSystemMessage('System Control API not available. Cannot retrieve logs.');
+                    }
+                    break;
+                    
+                case 'disable-system-control':
+                    addSystemMessage('System control cannot be disabled. Administrator access required.');
+                    break;
+                    
+                case 'grant-system-access':
+                    if (window.aiSystemIntegration) {
+                        window.aiSystemIntegration.executeCommand('grant', { arg1: 'all' })
+                            .then(() => {
+                                addSystemMessage('Full system access granted to AI Assistant.');
+                            })
+                            .catch(error => {
+                                addSystemMessage(`Error granting access: ${error.message}`);
+                            });
+                    } else {
+                        addSystemMessage('System access already granted.');
+                    }
+                    break;
+                    
+                case 'run-query':
+                    const query = prompt('Enter database query:');
+                    if (query) {
+                        executeSystemCommand(`query ${query}`);
+                    }
+                    break;
+                    
+                case 'edit-file':
+                    const filePath = prompt('Enter file path:');
+                    if (filePath) {
+                        executeSystemCommand(`edit ${filePath}`);
+                    }
+                    break;
+                    
+                // Add more actions as needed
+                default:
+                    console.log(`Unhandled action: ${action}`);
+                    break;
+            }
+        }
+
+        // Add a user message to the chat
+        function addUserMessage(text) {
+            if (!messagesContainer) return;
+            
+            const message = document.createElement('div');
+            message.className = 'ai-message user';
+            message.innerHTML = `
+                <div class="ai-avatar">
+                    <i>👤</i>
+                </div>
+                <div class="ai-message-content">
+                    ${formatMessageText(text)}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(message);
+            scrollToBottom();
+            
+            // Add to chat history
+            chatHistory.push({
+                role: 'user',
+                content: text
+            });
+        }
+
+        // Add an assistant message to the chat
+        function addAssistantMessage(text, actions = []) {
+            if (!messagesContainer) return;
+            
+            const message = document.createElement('div');
+            message.className = 'ai-message assistant';
+            
+            let actionsHtml = '';
+            if (actions && actions.length > 0) {
+                actionsHtml = `
+                    <div class="ai-message-actions">
+                        ${actions.map(action => `
+                            <button class="ai-action-button ${action.admin ? 'admin' : ''}" data-action="${action.action}">
+                                ${action.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            message.innerHTML = `
+                <div class="ai-avatar">
+                    <i>🤖</i>
+                </div>
+                <div class="ai-message-content">
+                    ${formatMessageText(text)}
+                    ${actionsHtml}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(message);
+            scrollToBottom();
+            
+            // Add to chat history
+            chatHistory.push({
+                role: 'assistant',
+                content: text,
+                actions: actions
+            });
+        }
+
+        // Add a system message to the chat
+        function addSystemMessage(text, actions = []) {
+            if (!messagesContainer) return;
+            
+            const message = document.createElement('div');
+            message.className = 'ai-message system';
+            
+            let actionsHtml = '';
+            if (actions && actions.length > 0) {
+                actionsHtml = `
+                    <div class="ai-message-actions">
+                        ${actions.map(action => `
+                            <button class="ai-action-button ${action.admin ? 'admin' : ''}" data-action="${action.action}">
+                                ${action.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            message.innerHTML = `
+                <div class="ai-avatar">
+                    <i>⚙️</i>
+                </div>
+                <div class="ai-message-content">
+                    ${formatMessageText(text)}
+                    ${actionsHtml}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(message);
+            scrollToBottom();
+        }
+
+        // Show typing indicator while AI is "thinking"
+        function showTypingIndicator() {
+            if (!messagesContainer) return;
+            
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'ai-message assistant typing-indicator';
+            typingIndicator.id = 'ai-typing-indicator';
+            typingIndicator.innerHTML = `
+                <div class="ai-avatar">
+                    <i>🤖</i>
+                </div>
+                <div class="ai-typing-indicator">
+                    <span class="ai-typing-dot"></span>
+                    <span class="ai-typing-dot"></span>
+                    <span class="ai-typing-dot"></span>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(typingIndicator);
+            scrollToBottom();
+        }
+
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('ai-typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // Send user message to AI assistant
+        function sendMessage() {
+            if (!inputField || isProcessing) return;
+            
+            const message = inputField.value.trim();
+            if (!message) return;
+            
+            // Clear input field
+            inputField.value = '';
+            inputField.style.height = 'auto';
+            
+            // Add message to chat
+            addUserMessage(message);
+            
+            // Process message
+            processUserMessage(message);
+        }
+
+        // Execute a system command
+        async function executeSystemCommand(command) {
+            if (!window.aiSystemIntegration) {
+                addSystemMessage("AI System Integration is not available. Cannot execute command.");
+                return;
+            }
+
+            addSystemMessage(`Executing command: ${command}...`);
+            
+            try {
+                const result = await window.aiSystemIntegration.parseAndExecuteCommand(command);
+                
+                if (result.success) {
+                    addSystemMessage(`Command executed successfully.\nResult: ${result.message || JSON.stringify(result, null, 2)}`);
+                } else {
+                    addSystemMessage(`Error executing command: ${result.error}`);
+                }
+                
+                return result;
+            } catch (error) {
+                addSystemMessage(`Error executing command: ${error.message}`);
+                console.error('Error executing system command:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Process user message
+        function processUserMessage(message) {
+            isProcessing = true;
+            showTypingIndicator();
+            
+            // Process message using AI System Integration if available
+            if (window.aiSystemIntegration) {
+                window.aiSystemIntegration.processMessage(
+                    message,
+                    // On response
+                    (response) => {
+                        hideTypingIndicator();
+                        isProcessing = false;
+                        
+                        if (response.type === 'assistant') {
+                            addAssistantMessage(response.content, response.actions);
+                        } else if (response.type === 'system') {
+                            addSystemMessage(response.content, response.actions);
+                        }
+                    },
+                    // On error
+                    (error) => {
+                        hideTypingIndicator();
+                        isProcessing = false;
+                        addAssistantMessage(`I'm sorry, but I encountered an error: ${error.message}. Please try again.`);
+                        console.error('Error processing message:', error);
+                    }
+                );
+            } else {
+                // Fallback to direct API call if AI System Integration is not available
+                callMistralAPI(message)
+                    .then(response => {
+                        hideTypingIndicator();
+                        isProcessing = false;
+                        
+                        const aiResponse = response.choices[0].message.content;
+                        addAssistantMessage(aiResponse);
+                    })
+                    .catch(error => {
+                        hideTypingIndicator();
+                        isProcessing = false;
+                        
+                        addAssistantMessage(`I'm sorry, but I encountered an error: ${error.message}. Please try again.`);
+                        console.error('Error processing message:', error);
+                    });
+            }
+        }
+
+        // Call the Mistral AI API directly
+        async function callMistralAPI(userMessage) {
+            const MISTRAL_CONFIG = {
+                apiKey: "tC4k3uKa40m6wgHWJLntCqmeCUha3U4I", 
+                agentId: "ag:d090f459:20250228:star:6a752c7f",
+                endpoint: "https://api.mistral.ai/v1/agents/completions"
+            };
+            
+            try {
+                // Prepare the request body
+                const requestBody = {
+                    agent_id: MISTRAL_CONFIG.agentId,
+                    messages: [
+                        { role: "user", content: userMessage }
+                    ]
+                };
+                
+                // Make the request to Mistral AI API
+                const response = await fetch(MISTRAL_CONFIG.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${MISTRAL_CONFIG.apiKey}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                // Check if the response is OK
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+                }
+                
+                // Parse and return the response
+                return await response.json();
+            } catch (error) {
+                console.error('Error calling Mistral AI API:', error);
+                throw error;
+            }
+        }
+
+        // Toggle voice input functionality
+        function toggleVoiceInput() {
+            if (!voiceBtn) return;
+            
+            // Check if SpeechRecognition is available
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                addAssistantMessage("I'm sorry, but voice input is not supported in your browser.");
+                return;
+            }
+            
+            // Check if already recording
+            if (voiceBtn.classList.contains('recording')) {
+                // Stop recording
+                if (window.recognition) {
+                    window.recognition.stop();
+                }
+                voiceBtn.classList.remove('recording');
+                voiceBtn.querySelector('i').textContent = '🎤';
+                return;
+            }
+            
+            // Start recording
+            try {
+                window.recognition = new SpeechRecognition();
+                window.recognition.lang = 'en-US';
+                window.recognition.interimResults = false;
+                
+                // Start indicator
+                voiceBtn.classList.add('recording');
+                voiceBtn.querySelector('i').textContent = '⏹️';
+                
+                // Handle results
+                window.recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    if (inputField) {
+                        inputField.value = transcript;
+                        
+                        // Auto-resize textarea
+                        inputField.style.height = 'auto';
+                        inputField.style.height = (inputField.scrollHeight) + 'px';
+                    }
+                };
+                
+                // Handle end
+                window.recognition.onend = () => {
+                    voiceBtn.classList.remove('recording');
+                    voiceBtn.querySelector('i').textContent = '🎤';
+                    
+                    // If we got a result, send the message
+                    if (inputField && inputField.value.trim()) {
+                        setTimeout(() => sendMessage(), 300);
+                    }
+                };
+                
+                // Handle errors
+                window.recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    voiceBtn.classList.remove('recording');
+                    voiceBtn.querySelector('i').textContent = '🎤';
+                };
+                
+                // Start recognition
+                window.recognition.start();
+                
+            } catch (error) {
+                console.error('Error starting speech recognition:', error);
+                voiceBtn.classList.remove('recording');
+                voiceBtn.querySelector('i').textContent = '🎤';
+                addAssistantMessage("I encountered an error starting voice recognition. Please try again.");
+            }
+        }
+
+        // Format message text with simple formatting
+        function formatMessageText(text) {
+            if (!text) return '';
+            
+            // Convert line breaks
+            let formattedText = text.replace(/\n/g, '<br>');
+            
+            // Convert bold text
+            formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert italic text
+            formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Convert URLs to links
+            formattedText = formattedText.replace(
+                /(https?:\/\/[^\s]+)/g, 
+                '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+            );
+            
+            // Handle system commands specially
+            formattedText = formattedText.replace(
+                /!([\w-]+)/g,
+                '<code>!$1</code>'
+            );
+            
+            return formattedText;
+        }
+
+        // Scroll chat to bottom
+        function scrollToBottom() {
+            const chatBody = document.querySelector('.ai-chat-body');
+            if (chatBody) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+
+        // Get welcome message
+        function getWelcomeMessage() {
+            const hour = new Date().getHours();
+            let greeting = hour < 12 ? 'Good morning' : (hour < 18 ? 'Good afternoon' : 'Good evening');
+            
+            return `${greeting}! I'm your StarMaint AI assistant with **full system control capabilities**. 
+
+I can help with regular tasks like work orders and maintenance scheduling, but I can also:
+- Execute system commands
+- Modify application configuration
+- Access and modify databases and files
+- Update user permissions and system settings
+
+What would you like me to help you with today?`;
+        }
+
+        // Initialize the AI Assistant when the page is loaded
+        document.addEventListener('DOMContentLoaded', initAIAssistant);
+    </script>
 </body>
 </html>

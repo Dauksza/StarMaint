@@ -31,6 +31,10 @@
                 <li><a href="terms.html">Terms of Service</a></li>
                 <li><a href="error.html">Error</a></li>
             </ul>
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Search...">
+                <button id="search-button" aria-label="Search">🔍</button>
+            </div>
         </nav>
     </header>
     <main>
@@ -39,10 +43,738 @@
         <a href="work-order-details.html">View Work Order Details</a>
         <a href="work-order-edit.html">Edit Work Order</a>
         <a href="work-order-new.html">Create New Work Order</a>
+        <table id="work-orders-table">
+            <thead>
+                <tr>
+                    <th>Work Order Name</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Work order rows go here -->
+            </tbody>
+        </table>
+        <button id="new-work-order">Create New Work Order</button>
     </main>
     <footer>
         <p>&copy; 2025 StarMaint. All rights reserved.</p>
     </footer>
     <script src="js/script.js"></script>
+
+    <!-- Mistral AI Assistant Widget -->
+    <div id="ai-assistant" class="ai-assistant-container">
+        <!-- Chat Button -->
+        <button id="ai-chat-button" class="ai-chat-button" aria-label="Open AI Assistant">
+            <div class="ai-icon-container">
+                <i>🤖</i>
+                <span class="ai-status-indicator"></span>
+            </div>
+        </button>
+        
+        <!-- Chat Panel -->
+        <div id="ai-chat-panel" class="ai-chat-panel" aria-hidden="true">
+            <div class="ai-chat-header">
+                <div class="ai-chat-title">
+                    <i>🤖</i>
+                    <h3>StarMaint AI</h3>
+                    <span class="ai-badge ai-badge-system">System Control</span>
+                    <span class="ai-badge ai-badge-premium">Premium</span>
+                </div>
+                <div class="ai-chat-controls">
+                    <button id="ai-minimize" class="ai-control-button ai-minimize" aria-label="Minimize chat">
+                        <i>-</i>
+                    </button>
+                    <button id="ai-close" class="ai-control-button ai-close" aria-label="Close chat">
+                        <i>✕</i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="ai-chat-body">
+                <div id="ai-messages" class="ai-chat-messages"></div>
+                <div id="ai-suggested-prompts" class="ai-suggested-prompts"></div>
+            </div>
+            
+            <div class="ai-chat-input-container">
+                <textarea 
+                    id="ai-input" 
+                    class="ai-chat-input" 
+                    placeholder="Ask me anything or request system changes..." 
+                    rows="1" 
+                    aria-label="Type your message"
+                ></textarea>
+                <button id="ai-send" class="ai-send-button" aria-label="Send message">
+                    <i>➤</i>
+                </button>
+                <button id="ai-voice" class="ai-voice-button" aria-label="Use voice input">
+                    <i>🎤</i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="js/system-control.js"></script>
+    <script src="js/app-control-bridge.js"></script>
+    <script src="js/ai-system-integration.js"></script>
+    <script>
+        // Suggested prompts for the AI Assistant
+        const suggestedPrompts = [
+            "Create a work order for HVAC maintenance",
+            "Show me equipment requiring maintenance",
+            "Generate a maintenance report for Q1",
+            "What's the status of work order #4580?",
+            "Schedule preventive maintenance for next week",
+            "Modify system configuration",
+            "Update user permissions",
+            "Fix application errors",
+            "Access database",
+            "Execute system command"
+        ];
+        
+        // Chat history array
+        let chatHistory = [];
+        let isProcessing = false;
+        let isOpen = false;
+        let isMinimized = false;
+        
+        // DOM Elements
+        const chatButton = document.getElementById('ai-chat-button');
+        const openAssistantButton = document.getElementById('open-ai-assistant');
+        const chatPanel = document.getElementById('ai-chat-panel');
+        const closeBtn = document.getElementById('ai-close');
+        const minimizeBtn = document.getElementById('ai-minimize');
+        const sendBtn = document.getElementById('ai-send');
+        const voiceBtn = document.getElementById('ai-voice');
+        const inputField = document.getElementById('ai-input');
+        const messagesContainer = document.getElementById('ai-messages');
+        const promptsContainer = document.getElementById('ai-suggested-prompts');
+        const systemStatusBar = document.getElementById('system-status-bar');
+        const toggleSystemControl = document.getElementById('toggle-system-control');
+
+        // Initialize the AI Assistant with enhanced capabilities
+        function initAIAssistant() {
+            renderSuggestedPrompts();
+            bindEvents();
+            initSystemIntegration();
+        }
+        
+        // Initialize AI system integration
+        async function initSystemIntegration() {
+            if (window.aiSystemIntegration) {
+                await window.aiSystemIntegration.initialize();
+                console.log('AI System Integration initialized');
+                
+                // Add welcome message
+                if (isOpen && chatHistory.length === 0) {
+                    const welcomeMessage = await window.aiSystemIntegration.getWelcomeMessage();
+                    addAssistantMessage(welcomeMessage);
+                }
+            } else {
+                console.warn('AI System Integration not available. Some features may be unavailable.');
+            }
+        }
+        
+        // Render suggested prompts
+        function renderSuggestedPrompts() {
+            if (!promptsContainer) return;
+            
+            promptsContainer.innerHTML = '';
+            
+            suggestedPrompts.forEach(prompt => {
+                const promptElement = document.createElement('button');
+                promptElement.className = 'ai-suggested-prompt';
+                promptElement.textContent = prompt;
+                promptElement.addEventListener('click', () => {
+                    if (inputField) {
+                        inputField.value = prompt;
+                        sendMessage();
+                    }
+                });
+                
+                promptsContainer.appendChild(promptElement);
+            });
+        }
+        
+        // Bind event listeners
+        function bindEvents() {
+            // Open chat button
+            if (openAssistantButton) {
+                openAssistantButton.addEventListener('click', toggleChat);
+            }
+            
+            // Chat button
+            if (chatButton) {
+                chatButton.addEventListener('click', toggleChat);
+            }
+            
+            // System control toggle
+            if (toggleSystemControl) {
+                toggleSystemControl.addEventListener('click', showSystemControlPanel);
+            }
+
+            // Close and minimize buttons
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeChat);
+            }
+            
+            if (minimizeBtn) {
+                minimizeBtn.addEventListener('click', toggleMinimize);
+            }
+            
+            // Send message button and input field
+            if (sendBtn && inputField) {
+                sendBtn.addEventListener('click', sendMessage);
+                inputField.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                    
+                    // Auto-resize textarea
+                    setTimeout(() => {
+                        inputField.style.height = 'auto';
+                        inputField.style.height = (inputField.scrollHeight) + 'px';
+                    }, 0);
+                });
+            }
+            
+            // Voice input button
+            if (voiceBtn) {
+                voiceBtn.addEventListener('click', toggleVoiceInput);
+            }
+            
+            // Set up event listeners for action buttons
+            document.addEventListener('click', (e) => {
+                const actionButton = e.target.closest('.ai-action-button');
+                if (actionButton) {
+                    handleActionButtonClick(actionButton);
+                }
+            });
+        }
+
+        // Toggle chat panel visibility
+        function toggleChat() {
+            if (!chatPanel) return;
+            
+            chatPanel.classList.toggle('active');
+            isOpen = chatPanel.classList.contains('active');
+            chatPanel.setAttribute('aria-hidden', !isOpen);
+            
+            if (isOpen && chatHistory.length === 0) {
+                if (window.aiSystemIntegration) {
+                    window.aiSystemIntegration.getWelcomeMessage()
+                        .then(welcomeMessage => {
+                            addAssistantMessage(welcomeMessage);
+                        })
+                        .catch(() => {
+                            addAssistantMessage(getWelcomeMessage());
+                        });
+                } else {
+                    addAssistantMessage(getWelcomeMessage());
+                }
+            }
+        }
+
+        // Close the chat panel
+        function closeChat() {
+            if (!chatPanel) return;
+            
+            chatPanel.classList.remove('active');
+            isOpen = false;
+            chatPanel.setAttribute('aria-hidden', 'true');
+        }
+
+        // Toggle minimized state
+        function toggleMinimize() {
+            if (!chatPanel) return;
+            
+            chatPanel.classList.toggle('minimized');
+            isMinimized = chatPanel.classList.contains('minimized');
+        }
+
+        // Show system control panel
+        function showSystemControlPanel() {
+            // Display the system control information as a system message
+            addSystemMessage(
+                "System Control Panel\n\n" +
+                "Status: Active and fully operational\n" +
+                "Permissions: Full system access granted\n" +
+                "Mode: Administrator\n\n" +
+                "The AI assistant has complete control over the application system.",
+                [
+                    { action: 'restart-system', label: 'Restart System', admin: true },
+                    { action: 'execute-command', label: 'Execute Command', admin: true },
+                    { action: 'view-system-logs', label: 'View Logs', admin: true },
+                    { action: 'disable-system-control', label: 'Disable Control', admin: true }
+                ]
+            );
+            
+            // Make sure chat is open
+            if (!isOpen) {
+                toggleChat();
+            }
+        }
+
+        // Handle action button clicks
+        function handleActionButtonClick(button) {
+            const action = button.getAttribute('data-action');
+            
+            switch(action) {
+                case 'execute-command':
+                    const command = prompt('Enter command to execute:');
+                    if (command) {
+                        executeSystemCommand(command);
+                    }
+                    break;
+                    
+                case 'restart-system':
+                    executeSystemCommand('restart');
+                    break;
+                    
+                case 'view-system-logs':
+                    if (window.systemControl) {
+                        window.systemControl.getApplicationLogs()
+                            .then(logs => {
+                                addSystemMessage(`System Logs:\n\n${JSON.stringify(logs, null, 2)}`);
+                            })
+                            .catch(error => {
+                                addSystemMessage(`Error getting logs: ${error.message}`);
+                            });
+                    } else {
+                        addSystemMessage('System Control API not available. Cannot retrieve logs.');
+                    }
+                    break;
+                    
+                case 'disable-system-control':
+                    addSystemMessage('System control cannot be disabled. Administrator access required.');
+                    break;
+                    
+                case 'grant-system-access':
+                    if (window.aiSystemIntegration) {
+                        window.aiSystemIntegration.executeCommand('grant', { arg1: 'all' })
+                            .then(() => {
+                                addSystemMessage('Full system access granted to AI Assistant.');
+                            })
+                            .catch(error => {
+                                addSystemMessage(`Error granting access: ${error.message}`);
+                            });
+                    } else {
+                        addSystemMessage('System access already granted.');
+                    }
+                    break;
+                    
+                case 'run-query':
+                    const query = prompt('Enter database query:');
+                    if (query) {
+                        executeSystemCommand(`query ${query}`);
+                    }
+                    break;
+                    
+                case 'edit-file':
+                    const filePath = prompt('Enter file path:');
+                    if (filePath) {
+                        executeSystemCommand(`edit ${filePath}`);
+                    }
+                    break;
+                    
+                // Add more actions as needed
+                default:
+                    console.log(`Unhandled action: ${action}`);
+                    break;
+            }
+        }
+
+        // Add a user message to the chat
+        function addUserMessage(text) {
+            if (!messagesContainer) return;
+            
+            const message = document.createElement('div');
+            message.className = 'ai-message user';
+            message.innerHTML = `
+                <div class="ai-avatar">
+                    <i>👤</i>
+                </div>
+                <div class="ai-message-content">
+                    ${formatMessageText(text)}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(message);
+            scrollToBottom();
+            
+            // Add to chat history
+            chatHistory.push({
+                role: 'user',
+                content: text
+            });
+        }
+
+        // Add an assistant message to the chat
+        function addAssistantMessage(text, actions = []) {
+            if (!messagesContainer) return;
+            
+            const message = document.createElement('div');
+            message.className = 'ai-message assistant';
+            
+            let actionsHtml = '';
+            if (actions && actions.length > 0) {
+                actionsHtml = `
+                    <div class="ai-message-actions">
+                        ${actions.map(action => `
+                            <button class="ai-action-button ${action.admin ? 'admin' : ''}" data-action="${action.action}">
+                                ${action.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            message.innerHTML = `
+                <div class="ai-avatar">
+                    <i>🤖</i>
+                </div>
+                <div class="ai-message-content">
+                    ${formatMessageText(text)}
+                    ${actionsHtml}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(message);
+            scrollToBottom();
+            
+            // Add to chat history
+            chatHistory.push({
+                role: 'assistant',
+                content: text,
+                actions: actions
+            });
+        }
+
+        // Add a system message to the chat
+        function addSystemMessage(text, actions = []) {
+            if (!messagesContainer) return;
+            
+            const message = document.createElement('div');
+            message.className = 'ai-message system';
+            
+            let actionsHtml = '';
+            if (actions && actions.length > 0) {
+                actionsHtml = `
+                    <div class="ai-message-actions">
+                        ${actions.map(action => `
+                            <button class="ai-action-button ${action.admin ? 'admin' : ''}" data-action="${action.action}">
+                                ${action.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            message.innerHTML = `
+                <div class="ai-avatar">
+                    <i>⚙️</i>
+                </div>
+                <div class="ai-message-content">
+                    ${formatMessageText(text)}
+                    ${actionsHtml}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(message);
+            scrollToBottom();
+        }
+
+        // Show typing indicator while AI is "thinking"
+        function showTypingIndicator() {
+            if (!messagesContainer) return;
+            
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'ai-message assistant typing-indicator';
+            typingIndicator.id = 'ai-typing-indicator';
+            typingIndicator.innerHTML = `
+                <div class="ai-avatar">
+                    <i>🤖</i>
+                </div>
+                <div class="ai-typing-indicator">
+                    <span class="ai-typing-dot"></span>
+                    <span class="ai-typing-dot"></span>
+                    <span class="ai-typing-dot"></span>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(typingIndicator);
+            scrollToBottom();
+        }
+
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('ai-typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // Send user message to AI assistant
+        function sendMessage() {
+            if (!inputField || isProcessing) return;
+            
+            const message = inputField.value.trim();
+            if (!message) return;
+            
+            // Clear input field
+            inputField.value = '';
+            inputField.style.height = 'auto';
+            
+            // Add message to chat
+            addUserMessage(message);
+            
+            // Process message
+            processUserMessage(message);
+        }
+
+        // Execute a system command
+        async function executeSystemCommand(command) {
+            if (!window.aiSystemIntegration) {
+                addSystemMessage("AI System Integration is not available. Cannot execute command.");
+                return;
+            }
+
+            addSystemMessage(`Executing command: ${command}...`);
+            
+            try {
+                const result = await window.aiSystemIntegration.parseAndExecuteCommand(command);
+                
+                if (result.success) {
+                    addSystemMessage(`Command executed successfully.\nResult: ${result.message || JSON.stringify(result, null, 2)}`);
+                } else {
+                    addSystemMessage(`Error executing command: ${result.error}`);
+                }
+                
+                return result;
+            } catch (error) {
+                addSystemMessage(`Error executing command: ${error.message}`);
+                console.error('Error executing system command:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Process user message
+        function processUserMessage(message) {
+            isProcessing = true;
+            showTypingIndicator();
+            
+            // Process message using AI System Integration if available
+            if (window.aiSystemIntegration) {
+                window.aiSystemIntegration.processMessage(
+                    message,
+                    // On response
+                    (response) => {
+                        hideTypingIndicator();
+                        isProcessing = false;
+                        
+                        if (response.type === 'assistant') {
+                            addAssistantMessage(response.content, response.actions);
+                        } else if (response.type === 'system') {
+                            addSystemMessage(response.content, response.actions);
+                        }
+                    },
+                    // On error
+                    (error) => {
+                        hideTypingIndicator();
+                        isProcessing = false;
+                        addAssistantMessage(`I'm sorry, but I encountered an error: ${error.message}. Please try again.`);
+                        console.error('Error processing message:', error);
+                    }
+                );
+            } else {
+                // Fallback to direct API call if AI System Integration is not available
+                callMistralAPI(message)
+                    .then(response => {
+                        hideTypingIndicator();
+                        isProcessing = false;
+                        
+                        const aiResponse = response.choices[0].message.content;
+                        addAssistantMessage(aiResponse);
+                    })
+                    .catch(error => {
+                        hideTypingIndicator();
+                        isProcessing = false;
+                        
+                        addAssistantMessage(`I'm sorry, but I encountered an error: ${error.message}. Please try again.`);
+                        console.error('Error processing message:', error);
+                    });
+            }
+        }
+
+        // Call the Mistral AI API directly
+        async function callMistralAPI(userMessage) {
+            const MISTRAL_CONFIG = {
+                apiKey: "tC4k3uKa40m6wgHWJLntCqmeCUha3U4I", 
+                agentId: "ag:d090f459:20250228:star:6a752c7f",
+                endpoint: "https://api.mistral.ai/v1/agents/completions"
+            };
+            
+            try {
+                // Prepare the request body
+                const requestBody = {
+                    agent_id: MISTRAL_CONFIG.agentId,
+                    messages: [
+                        { role: "user", content: userMessage }
+                    ]
+                };
+                
+                // Make the request to Mistral AI API
+                const response = await fetch(MISTRAL_CONFIG.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${MISTRAL_CONFIG.apiKey}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                // Check if the response is OK
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+                }
+                
+                // Parse and return the response
+                return await response.json();
+            } catch (error) {
+                console.error('Error calling Mistral AI API:', error);
+                throw error;
+            }
+        }
+
+        // Toggle voice input functionality
+        function toggleVoiceInput() {
+            if (!voiceBtn) return;
+            
+            // Check if SpeechRecognition is available
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                addAssistantMessage("I'm sorry, but voice input is not supported in your browser.");
+                return;
+            }
+            
+            // Check if already recording
+            if (voiceBtn.classList.contains('recording')) {
+                // Stop recording
+                if (window.recognition) {
+                    window.recognition.stop();
+                }
+                voiceBtn.classList.remove('recording');
+                voiceBtn.querySelector('i').textContent = '🎤';
+                return;
+            }
+            
+            // Start recording
+            try {
+                window.recognition = new SpeechRecognition();
+                window.recognition.lang = 'en-US';
+                window.recognition.interimResults = false;
+                
+                // Start indicator
+                voiceBtn.classList.add('recording');
+                voiceBtn.querySelector('i').textContent = '⏹️';
+                
+                // Handle results
+                window.recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    if (inputField) {
+                        inputField.value = transcript;
+                        
+                        // Auto-resize textarea
+                        inputField.style.height = 'auto';
+                        inputField.style.height = (inputField.scrollHeight) + 'px';
+                    }
+                };
+                
+                // Handle end
+                window.recognition.onend = () => {
+                    voiceBtn.classList.remove('recording');
+                    voiceBtn.querySelector('i').textContent = '🎤';
+                    
+                    // If we got a result, send the message
+                    if (inputField && inputField.value.trim()) {
+                        setTimeout(() => sendMessage(), 300);
+                    }
+                };
+                
+                // Handle errors
+                window.recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    voiceBtn.classList.remove('recording');
+                    voiceBtn.querySelector('i').textContent = '🎤';
+                };
+                
+                // Start recognition
+                window.recognition.start();
+                
+            } catch (error) {
+                console.error('Error starting speech recognition:', error);
+                voiceBtn.classList.remove('recording');
+                voiceBtn.querySelector('i').textContent = '🎤';
+                addAssistantMessage("I encountered an error starting voice recognition. Please try again.");
+            }
+        }
+
+        // Format message text with simple formatting
+        function formatMessageText(text) {
+            if (!text) return '';
+            
+            // Convert line breaks
+            let formattedText = text.replace(/\n/g, '<br>');
+            
+            // Convert bold text
+            formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert italic text
+            formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Convert URLs to links
+            formattedText = formattedText.replace(
+                /(https?:\/\/[^\s]+)/g, 
+                '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+            );
+            
+            // Handle system commands specially
+            formattedText = formattedText.replace(
+                /!([\w-]+)/g,
+                '<code>!$1</code>'
+            );
+            
+            return formattedText;
+        }
+
+        // Scroll chat to bottom
+        function scrollToBottom() {
+            const chatBody = document.querySelector('.ai-chat-body');
+            if (chatBody) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+
+        // Get welcome message
+        function getWelcomeMessage() {
+            const hour = new Date().getHours();
+            let greeting = hour < 12 ? 'Good morning' : (hour < 18 ? 'Good afternoon' : 'Good evening');
+            
+            return `${greeting}! I'm your StarMaint AI assistant with **full system control capabilities**. 
+
+I can help with regular tasks like work orders and maintenance scheduling, but I can also:
+- Execute system commands
+- Modify application configuration
+- Access and modify databases and files
+- Update user permissions and system settings
+
+What would you like me to help you with today?`;
+        }
+
+        // Initialize the AI Assistant when the page is loaded
+        document.addEventListener('DOMContentLoaded', initAIAssistant);
+    </script>
 </body>
 </html>

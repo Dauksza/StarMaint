@@ -5,6 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Work Order - StarMaint</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #F8F8F8;
+            color: #333333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+        }
+        h1 { font-size: 32px; }
+        h2 { font-size: 28px; }
+        h3 { font-size: 24px; }
+        h4 { font-size: 20px; }
+        h5 { font-size: 18px; }
+        h6 { font-size: 16px; }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 10px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: #1E90FF;
+        }
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        #search-bar {
+            margin-left: 20px;
+            padding: 5px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -31,11 +68,29 @@
                 <li><a href="terms.html">Terms of Service</a></li>
                 <li><a href="error.html">Error</a></li>
             </ul>
+            <input type="text" id="search-bar" placeholder="Search...">
         </nav>
     </header>
     <main>
         <h2>Edit Work Order</h2>
         <p>This page will allow editing of a work order.</p>
+        <form id="work-order-edit-form">
+            <label for="work-order-name">Work Order Name:</label>
+            <input type="text" id="work-order-name" name="work-order-name" required>
+            
+            <label for="work-order-date">Date:</label>
+            <input type="date" id="work-order-date" name="work-order-date" required>
+            
+            <label for="work-order-status">Status:</label>
+            <select id="work-order-status" name="work-order-status">
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="in-progress">In Progress</option>
+            </select>
+            
+            <button type="submit">Save Changes</button>
+        </form>
+        <a href="work-orders.html">View Work Orders</a>
     </main>
     <footer>
         <p>&copy; 2025 StarMaint. All rights reserved.</p>
