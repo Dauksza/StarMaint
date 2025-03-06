@@ -5,6 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - StarMaint</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #F8F8F8;
+            color: #333333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+        }
+        h1 { font-size: 32px; }
+        h2 { font-size: 28px; }
+        h3 { font-size: 24px; }
+        h4 { font-size: 20px; }
+        h5 { font-size: 18px; }
+        h6 { font-size: 16px; }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 10px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: #1E90FF;
+        }
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        #search-bar {
+            margin-left: 20px;
+            padding: 5px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -31,12 +68,27 @@
                 <li><a href="terms.html">Terms of Service</a></li>
                 <li><a href="error.html">Error</a></li>
             </ul>
+            <input type="text" id="search-bar" placeholder="Search...">
         </nav>
     </header>
     <main>
         <h2>Dashboard</h2>
-        <p>This page will display the dashboard.</p>
+        <p>This page will display the dashboard information.</p>
         <a href="dashboard-support.html">View Dashboard Support</a>
+        <section id="dashboard-items">
+            <div class="dashboard-item" draggable="true">
+                <h3>Item 1</h3>
+                <p>Details about item 1.</p>
+            </div>
+            <div class="dashboard-item" draggable="true">
+                <h3>Item 2</h3>
+                <p>Details about item 2.</p>
+            </div>
+            <div class="dashboard-item" draggable="true">
+                <h3>Item 3</h3>
+                <p>Details about item 3.</p>
+            </div>
+        </section>
     </main>
     <footer>
         <p>&copy; 2025 StarMaint. All rights reserved.</p>

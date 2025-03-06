@@ -31,11 +31,27 @@
                 <li><a href="terms.html">Terms of Service</a></li>
                 <li><a href="error.html">Error</a></li>
             </ul>
+            <input type="text" id="search-bar" placeholder="Search...">
         </nav>
     </header>
     <main>
         <h2>Audit Schedules</h2>
         <p>This page will display audit schedules.</p>
+        <table id="audit-schedules-table">
+            <thead>
+                <tr>
+                    <th>Audit Name</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows dynamically generated -->
+            </tbody>
+        </table>
+        <button id="new-audit-schedule">Create New Audit Schedule</button>
+        <a href="audit-details.html">View Audit Details</a>
+        <a href="audit-edit.html">Edit Audit</a>
     </main>
     <footer>
         <p>&copy; 2025 StarMaint. All rights reserved.</p>
