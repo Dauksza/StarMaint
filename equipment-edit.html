@@ -5,6 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Equipment - StarMaint</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #F8F8F8;
+            color: #333333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+        }
+        h1 { font-size: 32px; }
+        h2 { font-size: 28px; }
+        h3 { font-size: 24px; }
+        h4 { font-size: 20px; }
+        h5 { font-size: 18px; }
+        h6 { font-size: 16px; }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 10px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: #1E90FF;
+        }
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        #search-bar {
+            margin-left: 20px;
+            padding: 5px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -31,11 +68,29 @@
                 <li><a href="terms.html">Terms of Service</a></li>
                 <li><a href="error.html">Error</a></li>
             </ul>
+            <input type="text" id="search-bar" placeholder="Search...">
         </nav>
     </header>
     <main>
         <h2>Edit Equipment</h2>
-        <p>This page will allow editing of equipment details.</p>
+        <p>This page will allow editing of equipment information.</p>
+        <form id="equipment-edit-form">
+            <label for="equipment-name">Equipment Name:</label>
+            <input type="text" id="equipment-name" name="equipment-name" required>
+            
+            <label for="equipment-type">Type:</label>
+            <input type="text" id="equipment-type" name="equipment-type" required>
+            
+            <label for="equipment-status">Status:</label>
+            <select id="equipment-status" name="equipment-status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="maintenance">Maintenance</option>
+            </select>
+            
+            <button type="submit">Save Changes</button>
+        </form>
+        <a href="equipment.html">View Equipment List</a>
     </main>
     <footer>
         <p>&copy; 2025 StarMaint. All rights reserved.</p>
